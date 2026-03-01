@@ -53,23 +53,25 @@ func FindAll(app models.Application) http.HandlerFunc {
 	}
 }
 
-func FindByID(app models.Application) http.HandlerFunc {
+func FindByID(repo store.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
 
 		uid, err := uuid.FromString(idParam)
 		if err != nil {
+			slog.Error("Could not parse ID:", "error", err)
 			SendJSON(w, models.Response{Error: "ID format is not a UUID."}, http.StatusBadRequest)
 			return
 		}
 
-		user, ok := app.Data[models.ID(uid)]
-		if !ok {
+		user, err := repo.GetUserByID(r.Context(), models.ID(uid))
+		if err != nil {
+			slog.Error("Could not get user:", "error", err)
 			SendJSON(w, models.Response{Error: "Could not find user."}, http.StatusNotFound)
 			return
 		}
 
-		SendJSON(w, models.Response{Data: models.NewUserResponse(models.ID(uid), user)}, http.StatusOK)
+		SendJSON(w, models.Response{Data: user}, http.StatusOK)
 	}
 }
 
