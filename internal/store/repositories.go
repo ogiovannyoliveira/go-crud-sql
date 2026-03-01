@@ -15,10 +15,10 @@ type repositories struct {
 
 type Repositories interface {
 	SaveUser(ctx context.Context, user models.UserResponse) (models.UserResponse, error)
-	UpdateUser(ctx context.Context, id models.ID, user models.User) (models.UserResponse, error)
-	GetUsers(ctx context.Context, id models.ID) ([]models.UserResponse, error)
+	UpdateUser(ctx context.Context, id models.ID, user models.User) (bool, error)
+	GetUsers(ctx context.Context) ([]models.UserResponse, error)
 	GetUserByID(ctx context.Context, id models.ID) (models.UserResponse, error)
-	DeleteUser(ctx context.Context, id models.ID) (models.UserResponse, error)
+	DeleteUser(ctx context.Context, id models.ID) (bool, error)
 }
 
 func NewRepositories(db *sql.DB) Repositories {
@@ -43,8 +43,15 @@ func (r repositories) SaveUser(ctx context.Context, user models.UserResponse) (m
 }
 
 // DeleteUser implements [Repositories].
-func (r repositories) DeleteUser(ctx context.Context, id models.ID) (models.UserResponse, error) {
-	panic("unimplemented")
+func (r repositories) DeleteUser(ctx context.Context, id models.ID) (bool, error) {
+	res, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id.UUID().String())
+	affectedRows, _ := res.RowsAffected()
+	if err != nil || affectedRows <= 0 {
+		slog.Error("Could not delete user.", "error", err)
+		return false, errors.New("Could not delete user.")
+	}
+
+	return true, nil
 }
 
 // GetUserByID implements [Repositories].
@@ -66,7 +73,7 @@ func (r repositories) GetUserByID(ctx context.Context, id models.ID) (models.Use
 }
 
 // GetUsers implements [Repositories].
-func (r repositories) GetUsers(ctx context.Context, id models.ID) ([]models.UserResponse, error) {
+func (r repositories) GetUsers(ctx context.Context) ([]models.UserResponse, error) {
 	users := make([]models.UserResponse, 0)
 	rows, err := r.db.QueryContext(
 		ctx,
@@ -98,6 +105,18 @@ func (r repositories) GetUsers(ctx context.Context, id models.ID) ([]models.User
 }
 
 // UpdateUser implements [Repositories].
-func (r repositories) UpdateUser(ctx context.Context, id models.ID, user models.User) (models.UserResponse, error) {
-	panic("unimplemented")
+func (r repositories) UpdateUser(ctx context.Context, id models.ID, user models.User) (bool, error) {
+	res, err := r.db.ExecContext(
+		ctx,
+		"UPDATE users SET first_name = $1, last_name = $2, biography = $3 WHERE id = $4",
+		user.FirstName, user.LastName, user.Biography, id.UUID().String(),
+	)
+	affectedRows, _ := res.RowsAffected()
+
+	if err != nil || affectedRows <= 0 {
+		slog.Error("Could not update user.", "error", err)
+		return false, errors.New("Could not update user.")
+	}
+
+	return true, nil
 }

@@ -41,12 +41,12 @@ func Insert(repo store.Repositories) http.HandlerFunc {
 	}
 }
 
-func FindAll(app models.Application) http.HandlerFunc {
+func FindAll(repo store.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		users := make([]models.UserResponse, 0, len(app.Data))
-
-		for id, body := range app.Data {
-			users = append(users, models.NewUserResponse(id, body))
+		users, err := repo.GetUsers(r.Context())
+		if err != nil {
+			SendJSON(w, models.Response{Error: err.Error()}, http.StatusInternalServerError)
+			return
 		}
 
 		SendJSON(w, models.Response{Data: users}, http.StatusOK)
@@ -75,7 +75,7 @@ func FindByID(repo store.Repositories) http.HandlerFunc {
 	}
 }
 
-func Update(app models.Application) http.HandlerFunc {
+func Update(repo store.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
 
@@ -91,9 +91,20 @@ func Update(app models.Application) http.HandlerFunc {
 			return
 		}
 
-		user, ok := app.Data[models.ID(uid)]
-		if !ok {
+		if err := body.Validate(); err != nil {
+			SendJSON(w, models.Response{Error: err.Error()}, http.StatusBadRequest)
+			return
+		}
+
+		user, err := repo.GetUserByID(r.Context(), models.ID(uid))
+		if err != nil {
 			SendJSON(w, models.Response{Error: "Could not find user."}, http.StatusNotFound)
+			return
+		}
+
+		updated, err := repo.UpdateUser(r.Context(), models.ID(uid), body)
+		if !updated || err != nil {
+			SendJSON(w, models.Response{Error: "Could not update user."}, http.StatusInternalServerError)
 			return
 		}
 
@@ -101,20 +112,14 @@ func Update(app models.Application) http.HandlerFunc {
 		user.LastName = body.LastName
 		user.Biography = body.Biography
 
-		if err := user.Validate(); err != nil {
-			SendJSON(w, models.Response{Error: err.Error()}, http.StatusBadRequest)
-			return
-		}
-
-		app.Data[models.ID(uid)] = user
 		SendJSON(w, models.Response{
-			Data:    models.NewUserResponse(models.ID(uid), user),
+			Data:    user,
 			Message: "User updated successfully.",
 		}, http.StatusOK)
 	}
 }
 
-func Delete(app models.Application) http.HandlerFunc {
+func Delete(repo store.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
 
@@ -124,15 +129,20 @@ func Delete(app models.Application) http.HandlerFunc {
 			return
 		}
 
-		user, ok := app.Data[models.ID(uid)]
-		if !ok {
+		user, err := repo.GetUserByID(r.Context(), models.ID(uid))
+		if err != nil {
 			SendJSON(w, models.Response{Error: "Could not find user."}, http.StatusNotFound)
 			return
 		}
 
-		delete(app.Data, models.ID(uid))
+		deleted, err := repo.DeleteUser(r.Context(), models.ID(uid))
+		if !deleted || err != nil {
+			SendJSON(w, models.Response{Error: "Could not delete user."}, http.StatusInternalServerError)
+			return
+		}
+
 		SendJSON(w, models.Response{
-			Data:    models.NewUserResponse(models.ID(uid), user),
+			Data:    user,
 			Message: "User deleted successfully.",
 		}, http.StatusOK)
 	}

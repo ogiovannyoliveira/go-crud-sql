@@ -18,10 +18,10 @@ func NewHandler(app models.Application, repo store.Repositories) http.Handler {
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", Insert(repo))
-			r.Get("/", FindAll(app))
+			r.Get("/", FindAll(repo))
 			r.Get("/{id}", FindByID(repo))
-			r.Put("/{id}", Update(app))
-			r.Delete("/{id}", Delete(app))
+			r.Put("/{id}", Update(repo))
+			r.Delete("/{id}", Delete(repo))
 		})
 	})
 
