@@ -6,7 +6,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/ogiovannyoliveira/go-crud-in-memory/internal/api/models"
+	"github.com/ogiovannyoliveira/go-crud-sql/internal/api/models"
 )
 
 type repositories struct {

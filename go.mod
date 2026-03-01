@@ -1,4 +1,4 @@
-module github.com/ogiovannyoliveira/go-crud-in-memory
+module github.com/ogiovannyoliveira/go-crud-sql
 
 go 1.25.6
 

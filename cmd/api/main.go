@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ogiovannyoliveira/go-crud-in-memory/internal/api"
-	"github.com/ogiovannyoliveira/go-crud-in-memory/internal/api/models"
-	"github.com/ogiovannyoliveira/go-crud-in-memory/internal/store"
+	"github.com/ogiovannyoliveira/go-crud-sql/internal/api"
+	"github.com/ogiovannyoliveira/go-crud-sql/internal/api/models"
+	"github.com/ogiovannyoliveira/go-crud-sql/internal/store"
 )
 
 func main() {
