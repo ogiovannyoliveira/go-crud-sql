@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,20 +16,26 @@ func Insert(app models.Application, repo store.Repositories) http.HandlerFunc {
 		var newUser models.User
 
 		if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
+			slog.Error("Could not parse body:", "error", err)
 			SendJSON(w, models.Response{Error: "Could not parse body."}, http.StatusUnprocessableEntity)
 			return
 		}
 
 		if err := newUser.Validate(); err != nil {
+			slog.Error("Could validate user:", "error", err)
 			SendJSON(w, models.Response{Error: err.Error()}, http.StatusBadRequest)
 			return
 		}
 
 		id := models.ID(uuid.NewV4())
-		app.Data[id] = newUser
+		user, err := repo.SaveUser(r.Context(), models.NewUserResponse(id, newUser))
+		if err != nil {
+			SendJSON(w, models.Response{Error: err.Error()}, http.StatusInternalServerError)
+			return
+		}
 
 		SendJSON(w, models.Response{
-			Data:    models.NewUserResponse(id, newUser),
+			Data:    user,
 			Message: "User saved successfully.",
 		}, http.StatusCreated)
 	}

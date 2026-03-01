@@ -27,8 +27,11 @@ func run() error {
 		slog.Error("Error while trying to connect to database.", "error", err)
 		return err
 	}
+	defer db.Close()
+	slog.Info("Database connected successfully.")
 
 	repo := store.NewRepositories(db)
+	slog.Info("Repositories initializes successfully.")
 
 	app := models.Application{Data: map[models.ID]models.User{}}
 	handler := api.NewHandler(app, repo)

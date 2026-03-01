@@ -18,6 +18,20 @@ func (id ID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
+// ID Scan helper will be executed when sql.DB calls .Scan, to avoid type errors.
+func (id *ID) Scan(value any) error {
+	s, ok := value.([]byte)
+	if !ok {
+		return errors.New("Failed to scan ID: expected []byte")
+	}
+	u, err := uuid.FromString(string(s))
+	if err != nil {
+		return err
+	}
+	*id = ID(u)
+	return nil
+}
+
 func (id *ID) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {

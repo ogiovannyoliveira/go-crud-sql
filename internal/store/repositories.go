@@ -30,8 +30,8 @@ func NewRepositories(db *sql.DB) Repositories {
 func (r repositories) SaveUser(ctx context.Context, user models.UserResponse) (models.UserResponse, error) {
 	_, err := r.db.ExecContext(
 		ctx,
-		"INSERT INTO users (id, first_name, last_name, biography) VALUES (?, ?, ?, ?)",
-		user.ID, user.FirstName, user.LastName, user.Biography,
+		"INSERT INTO users (id, first_name, last_name, biography) VALUES ($1, $2, $3, $4)",
+		user.ID.UUID().String(), user.FirstName, user.LastName, user.Biography,
 	)
 
 	if err != nil {
@@ -52,8 +52,8 @@ func (r repositories) GetUserByID(ctx context.Context, id models.ID) (models.Use
 	var user models.UserResponse
 	row := r.db.QueryRowContext(
 		ctx,
-		"SELECT id, first_name, last_name, biography FROM users WHERE id = ?",
-		id,
+		"SELECT id, first_name, last_name, biography FROM users WHERE id = $1",
+		id.UUID().String(),
 	)
 
 	err := row.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Biography)
