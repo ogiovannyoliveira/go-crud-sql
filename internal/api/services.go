@@ -11,7 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func Insert(app models.Application, repo store.Repositories) http.HandlerFunc {
+func Insert(repo store.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newUser models.User
 
