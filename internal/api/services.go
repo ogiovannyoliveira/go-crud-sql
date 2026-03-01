@@ -11,7 +11,25 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func Insert(repo store.Repositories) http.HandlerFunc {
+type services struct {
+	repo store.Repositories
+}
+
+type Services interface {
+	Insert() http.HandlerFunc
+	FindAll() http.HandlerFunc
+	FindByID() http.HandlerFunc
+	Update() http.HandlerFunc
+	Delete() http.HandlerFunc
+}
+
+func NewServices(repo store.Repositories) Services {
+	slog.Info("Initializing services...")
+	return services{repo}
+}
+
+// Insert implements [Services].
+func (s services) Insert() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newUser models.User
 
@@ -28,7 +46,7 @@ func Insert(repo store.Repositories) http.HandlerFunc {
 		}
 
 		id := models.ID(uuid.NewV4())
-		user, err := repo.SaveUser(r.Context(), models.NewUserResponse(id, newUser))
+		user, err := s.repo.SaveUser(r.Context(), models.NewUserResponse(id, newUser))
 		if err != nil {
 			SendJSON(w, models.Response{Error: err.Error()}, http.StatusInternalServerError)
 			return
@@ -41,9 +59,10 @@ func Insert(repo store.Repositories) http.HandlerFunc {
 	}
 }
 
-func FindAll(repo store.Repositories) http.HandlerFunc {
+// FindAll implements [Services].
+func (s services) FindAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		users, err := repo.GetUsers(r.Context())
+		users, err := s.repo.GetUsers(r.Context())
 		if err != nil {
 			SendJSON(w, models.Response{Error: err.Error()}, http.StatusInternalServerError)
 			return
@@ -53,7 +72,8 @@ func FindAll(repo store.Repositories) http.HandlerFunc {
 	}
 }
 
-func FindByID(repo store.Repositories) http.HandlerFunc {
+// FindByID implements [Services].
+func (s services) FindByID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
 
@@ -64,7 +84,7 @@ func FindByID(repo store.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user, err := repo.GetUserByID(r.Context(), models.ID(uid))
+		user, err := s.repo.GetUserByID(r.Context(), models.ID(uid))
 		if err != nil {
 			slog.Error("Could not get user:", "error", err)
 			SendJSON(w, models.Response{Error: "Could not find user."}, http.StatusNotFound)
@@ -75,7 +95,8 @@ func FindByID(repo store.Repositories) http.HandlerFunc {
 	}
 }
 
-func Update(repo store.Repositories) http.HandlerFunc {
+// Update implements [Services].
+func (s services) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
 
@@ -96,13 +117,13 @@ func Update(repo store.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user, err := repo.GetUserByID(r.Context(), models.ID(uid))
+		user, err := s.repo.GetUserByID(r.Context(), models.ID(uid))
 		if err != nil {
 			SendJSON(w, models.Response{Error: "Could not find user."}, http.StatusNotFound)
 			return
 		}
 
-		updated, err := repo.UpdateUser(r.Context(), models.ID(uid), body)
+		updated, err := s.repo.UpdateUser(r.Context(), models.ID(uid), body)
 		if !updated || err != nil {
 			SendJSON(w, models.Response{Error: "Could not update user."}, http.StatusInternalServerError)
 			return
@@ -119,7 +140,8 @@ func Update(repo store.Repositories) http.HandlerFunc {
 	}
 }
 
-func Delete(repo store.Repositories) http.HandlerFunc {
+// Delete implements [Services].
+func (s services) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
 
@@ -129,13 +151,13 @@ func Delete(repo store.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user, err := repo.GetUserByID(r.Context(), models.ID(uid))
+		user, err := s.repo.GetUserByID(r.Context(), models.ID(uid))
 		if err != nil {
 			SendJSON(w, models.Response{Error: "Could not find user."}, http.StatusNotFound)
 			return
 		}
 
-		deleted, err := repo.DeleteUser(r.Context(), models.ID(uid))
+		deleted, err := s.repo.DeleteUser(r.Context(), models.ID(uid))
 		if !deleted || err != nil {
 			SendJSON(w, models.Response{Error: "Could not delete user."}, http.StatusInternalServerError)
 			return

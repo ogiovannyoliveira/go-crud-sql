@@ -30,9 +30,11 @@ func run() error {
 	slog.Info("Database connected successfully.")
 
 	repo := store.NewRepositories(db)
-	slog.Info("Repositories initializes successfully.")
+	slog.Info("Repositories initialized successfully.")
+	services := api.NewServices(repo)
+	slog.Info("Services initialized successfully.")
 
-	handler := api.NewHandler(repo)
+	handler := api.NewHandler(services)
 
 	s := http.Server{
 		Addr:         ":8080",

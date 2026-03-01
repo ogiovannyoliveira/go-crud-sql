@@ -5,10 +5,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ogiovannyoliveira/go-crud-sql/internal/api/models"
-	"github.com/ogiovannyoliveira/go-crud-sql/internal/store"
 )
 
-func NewHandler(repo store.Repositories) http.Handler {
+func NewHandler(services Services) http.Handler {
 	r := chi.NewMux()
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -17,11 +16,11 @@ func NewHandler(repo store.Repositories) http.Handler {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/", Insert(repo))
-			r.Get("/", FindAll(repo))
-			r.Get("/{id}", FindByID(repo))
-			r.Put("/{id}", Update(repo))
-			r.Delete("/{id}", Delete(repo))
+			r.Post("/", services.Insert())
+			r.Get("/", services.FindAll())
+			r.Get("/{id}", services.FindByID())
+			r.Put("/{id}", services.Update())
+			r.Delete("/{id}", services.Delete())
 		})
 	})
 
