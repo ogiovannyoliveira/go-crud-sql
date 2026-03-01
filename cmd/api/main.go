@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ogiovannyoliveira/go-crud-sql/internal/api"
-	"github.com/ogiovannyoliveira/go-crud-sql/internal/api/models"
 	"github.com/ogiovannyoliveira/go-crud-sql/internal/store"
 )
 
@@ -33,8 +32,7 @@ func run() error {
 	repo := store.NewRepositories(db)
 	slog.Info("Repositories initializes successfully.")
 
-	app := models.Application{Data: map[models.ID]models.User{}}
-	handler := api.NewHandler(app, repo)
+	handler := api.NewHandler(repo)
 
 	s := http.Server{
 		Addr:         ":8080",

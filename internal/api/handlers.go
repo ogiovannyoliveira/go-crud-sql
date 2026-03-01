@@ -8,7 +8,7 @@ import (
 	"github.com/ogiovannyoliveira/go-crud-sql/internal/store"
 )
 
-func NewHandler(app models.Application, repo store.Repositories) http.Handler {
+func NewHandler(repo store.Repositories) http.Handler {
 	r := chi.NewMux()
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
